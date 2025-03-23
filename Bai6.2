@@ -1,0 +1,254 @@
+#include <iostream>
+#include <iomanip>
+#include <string>
+#include <vector>
+#include <algorithm>
+#include <cctype>
+#include <cstdlib>  
+
+using namespace std;
+
+// ----------------- Hàm kiểm tra ---------------------
+
+bool isAllDigit(const string& str) {
+    // Nếu chuỗi rỗng => không hợp lệ
+    if (str.empty()) return false;
+
+    // Xác định vị trí bắt đầu (cho phép dấu - đầu chuỗi)
+    int start = (str[0] == '-') ? 1 : 0;
+
+    // Nếu chỉ có mỗi dấu '-' mà không có ký tự số => không hợp lệ
+    if (start == 1 && str.length() == 1) return false;
+
+    // Kiểm tra từng ký tự còn lại
+    for (int i = start; i < (int)str.size(); ++i) {
+        if (!isdigit(str[i])) {
+            return false;
+        }
+    }
+    return true;
+}
+
+// Hàm kiểm tra có phải tất cả là chữ cái (và khoảng trắng) không
+bool isAllAlpha(const string& str) {
+    if (str.empty()) return false;  // tên rỗng => không hợp lệ
+    for (char c : str) {
+        // Cho phép chữ cái (A-Z, a-z) và khoảng trắng
+        if (!isalpha(c) && c != ' ') {
+            return false;
+        }
+    }
+    return true;
+}
+
+// ----------------- Class HocSinh ---------------------
+class HocSinh {
+private:
+    string hoTen;
+    float diemToan, diemVan, diemAnh;
+
+public:
+    void nhap();
+    void xuat();
+    float tinhDiemTrungBinh() const;
+    string xepLoai() const;
+    string getHoTen() const { return hoTen; }
+    float getDiemToan() const { return diemToan; }
+};
+
+// Nhập thông tin học sinh (có kiểm tra bằng isAllAlpha và isAllDigit)
+void HocSinh::nhap() {
+    // 1) Nhập họ tên, kiểm tra chỉ gồm chữ cái + khoảng trắng
+    while (true) {
+        cout << "Nhap ho ten: ";
+        // Dùng getline để lấy cả dòng (kể cả khoảng trắng)
+        getline(cin, hoTen);
+
+        if (isAllAlpha(hoTen)) {
+            // Nếu là chữ cái và khoảng trắng => OK
+            break;
+        }
+        else {
+            cout << "Ho ten khong hop le (khong duoc chua so hoac ky tu dac biet). Vui long nhap lai.\n";
+        }
+    }
+
+    // 2) Nhập diemToan bằng chuỗi, sau đó kiểm tra
+    while (true) {
+        cout << "Nhap diem Toan (0 - 10): ";
+        string tmp;
+        getline(cin, tmp);
+
+        // Kiểm tra có phải toàn số (hoặc -)? Rồi chuyển sang float
+        if (isAllDigit(tmp)) {
+            float val = stof(tmp);
+            if (val >= 0.0f && val <= 10.0f) {
+                diemToan = val;
+                break;
+            }
+            else {
+                cout << "Diem Toan phai trong khoang [0..10]. Nhap lai.\n";
+            }
+        }
+        else {
+            cout << "Khong phai chu so hop le. Vui long nhap lai.\n";
+        }
+    }
+
+    // 3) Nhập diemVan
+    while (true) {
+        cout << "Nhap diem Van (0 - 10): ";
+        string tmp;
+        getline(cin, tmp);
+
+        if (isAllDigit(tmp)) {
+            float val = stof(tmp);
+            if (val >= 0.0f && val <= 10.0f) {
+                diemVan = val;
+                break;
+            }
+            else {
+                cout << "Diem Van phai trong khoang [0..10]. Nhap lai.\n";
+            }
+        }
+        else {
+            cout << "Khong phai chu so hop le. Vui long nhap lai.\n";
+        }
+    }
+
+    // 4) Nhập diemAnh
+    while (true) {
+        cout << "Nhap diem Ngoai Ngu (0 - 10): ";
+        string tmp;
+        getline(cin, tmp);
+
+        if (isAllDigit(tmp)) {
+            float val = stof(tmp);
+            if (val >= 0.0f && val <= 10.0f) {
+                diemAnh = val;
+                break;
+            }
+            else {
+                cout << "Diem Ngoai Ngu phai trong khoang [0..10]. Nhap lai.\n";
+            }
+        }
+        else {
+            cout << "Khong phai chu so hop le. Vui long nhap lai.\n";
+        }
+    }
+}
+
+// Tính điểm trung bình
+float HocSinh::tinhDiemTrungBinh() const {
+    return (2.0f * diemToan + diemVan + diemAnh) / 4.0f;
+}
+
+// Xếp loại học sinh
+string HocSinh::xepLoai() const {
+    float dtb = tinhDiemTrungBinh();
+    if (dtb >= 9.0f) return "Xuat sac";
+    else if (dtb >= 8.0f) return "Gioi";
+    else if (dtb >= 6.5f) return "Kha";
+    else if (dtb >= 5.0f) return "Trung binh";
+    else return "Yeu";
+}
+
+// Xuất thông tin học sinh
+void HocSinh::xuat() {
+    cout << setw(25) << left << hoTen
+        << setw(8) << diemToan
+        << setw(8) << diemVan
+        << setw(8) << diemAnh
+        << setw(8) << fixed << setprecision(2) << tinhDiemTrungBinh()
+        << setw(15) << xepLoai() << endl;
+}
+
+// ----------------- Hàm phụ ---------------------
+
+// Đưa chuỗi về dạng chữ thường (để tìm kiếm không phân biệt hoa thường)
+string toLower(const string& s) {
+    string res = s;
+    transform(res.begin(), res.end(), res.begin(), ::tolower);
+    return res;
+}
+
+// ----------------- Main ---------------------
+int main() {
+    int n;
+    cout << "Nhap so luong hoc sinh: ";
+    cin >> n;
+    cin.ignore(numeric_limits<streamsize>::max(), '\n');  // Xóa bỏ '\n' còn trong bộ đệm
+
+    vector<HocSinh> ds(n);
+
+    cout << "\n=== NHAP DANH SACH HOC SINH ===\n";
+    for (int i = 0; i < n; i++) {
+        cout << "\nHoc sinh thu " << i + 1 << ":\n";
+        ds[i].nhap();
+    }
+
+    cout << "\n=== DANH SACH HOC SINH ===\n";
+    cout << setw(25) << left << "Ho Ten"
+        << setw(8) << "Toan"
+        << setw(8) << "Van"
+        << setw(8) << "Anh"
+        << setw(8) << "DTB"
+        << setw(15) << "Xep Loai" << endl;
+
+    for (HocSinh& hs : ds) {
+        hs.xuat();
+    }
+
+    // Tìm học sinh có điểm trung bình cao nhất
+    float maxDTB = ds[0].tinhDiemTrungBinh();
+    for (int i = 1; i < n; i++) {
+        float dtb = ds[i].tinhDiemTrungBinh();
+        if (dtb > maxDTB) {
+            maxDTB = dtb;
+        }
+    }
+
+    cout << "\n=== HOC SINH CO DIEM TRUNG BINH CAO NHAT ===\n";
+    for (HocSinh& hs : ds) {
+        if (hs.tinhDiemTrungBinh() == maxDTB) {
+            hs.xuat();
+        }
+    }
+
+    // Tìm kiếm học sinh theo từ khóa tên
+    string keyword;
+    cout << "\nNhap tu khoa tim kiem ten: ";
+    getline(cin, keyword);
+
+    string keywordLower = toLower(keyword);
+    cout << "\n=== KET QUA TIM KIEM ===\n";
+    bool found = false;
+    for (HocSinh& hs : ds) {
+        // Đưa tên học sinh về dạng chữ thường
+        string tenLower = toLower(hs.getHoTen());
+        if (tenLower.find(keywordLower) != string::npos) {
+            hs.xuat();
+            found = true;
+        }
+    }
+    if (!found) {
+        cout << "Khong tim thay hoc sinh nao phu hop.\n";
+    }
+
+    // Xuất danh sách học sinh có điểm Toán thấp nhất
+    float minToan = ds[0].getDiemToan();
+    for (int i = 1; i < n; i++) {
+        if (ds[i].getDiemToan() < minToan) {
+            minToan = ds[i].getDiemToan();
+        }
+    }
+
+    cout << "\n=== HOC SINH CO DIEM TOAN THAP NHAT ===\n";
+    for (HocSinh& hs : ds) {
+        if (hs.getDiemToan() == minToan) {
+            hs.xuat();
+        }
+    }
+
+    return 0;
+}
