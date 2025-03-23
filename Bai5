@@ -1,0 +1,141 @@
+#include <iostream>
+#include <string>
+using namespace std;
+
+bool isAllDigit(const string& str) {
+    if (str.empty()) return false;
+
+    int start = 0;
+    
+    for (size_t i = start; i < str.size(); i++) {
+        if (!isdigit(str[i])) {
+            return false;
+        }
+    }
+    return true;
+}
+
+class Date {
+private:
+    int day;
+    int month;
+    int year;
+
+public:
+    // Constructor mặc định
+    Date() : day(0), month(0), year(0) {}
+
+    // Constructor có tham số
+    Date(int d, int m, int y) : day(d), month(m), year(y) {}
+
+    // Kiểm tra năm nhuận
+    bool isLeapYear(int y) {
+        return ((y % 400 == 0) || (y % 4 == 0 && y % 100 != 0));
+    }
+
+    // Số ngày tối đa của tháng
+    int daysInMonth(int m, int y) {
+        switch (m) {
+        case 4: case 6: case 9: case 11:
+            return 30;
+        case 2:
+            return (isLeapYear(y) ? 29 : 28);
+        default:
+            return 31;
+        }
+    }
+
+    // Hàm nhập (sửa lại để dùng string + isAllDigit)
+    void input() {
+        string sd, sm, sy;
+        while (true) {
+            cout << "Nhap ngay: ";
+            cin >> sd;
+            cout << "Nhap thang: ";
+            cin >> sm;
+            cout << "Nhap nam: ";
+            cin >> sy;
+
+            if (!isAllDigit(sd) || !isAllDigit(sm) || !isAllDigit(sy)) {
+                cout << "Loi: Vui long nhap so nguyen hop le!\n";
+                continue;
+            }
+
+            day = stoi(sd);
+            month = stoi(sm);
+            year = stoi(sy);
+
+            if (month < 1 || month > 12) {
+                cout << "Thang khong hop le!\n";
+            }
+            else if (day < 1 || day > daysInMonth(month, year)) {
+                cout << "Ngay khong hop le!\n";
+            }
+            else {
+                
+                break;
+            }
+            cout << "Vui long nhap lai.\n";
+        }
+    }
+
+    void print() {
+        cout << day << "/" << month << "/" << year << endl;
+    }
+
+    void nextDay() {
+        day++;
+        if (day > daysInMonth(month, year)) {
+            day = 1;
+            month++;
+            if (month > 12) {
+                month = 1;
+                year++;
+            }
+        }
+    }
+
+    void prevDay() {
+        day--;
+        if (day < 1) {
+            month--;
+            if (month < 1) {
+                month = 12;
+                year--;
+            }
+            day = daysInMonth(month, year);
+        }
+    }
+
+    int dayOfYear() {
+        int count = 0;
+        for (int m = 1; m < month; m++) {
+            count += daysInMonth(m, year);
+        }
+        count += day;
+        return count;
+    }
+};
+
+int main() {
+    Date myDate;
+    myDate.input(); // Nhập bằng chuỗi + kiểm tra
+
+    // Ngày kế tiếp
+    Date nextDate = myDate;
+    nextDate.nextDay();
+    cout << "Ngay ke tiep: ";
+    nextDate.print();
+
+    // Ngày trước
+    Date prevDate = myDate;
+    prevDate.prevDay();
+    cout << "Ngay truoc do: ";
+    prevDate.print();
+
+    // Ngày thứ mấy trong năm
+    cout << "Ngay hien tai la ngay thu "
+        << myDate.dayOfYear() << " trong nam." << endl;
+
+    return 0;
+}
