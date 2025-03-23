@@ -1,0 +1,450 @@
+#include <iostream>
+#include <string>
+#include <vector>
+#include <algorithm>  // std::sort
+#include <cctype>     // isalpha, isdigit
+#include <iomanip>    // std::fixed, std::setprecision
+using namespace std;
+
+// ================== HÀM KIỂM TRA CHUỖI ==================
+
+// Hàm kiểm tra chuỗi toàn ký tự digit
+bool isAllDigit(const string& str) {
+    if (str.empty()) return false;
+    for (char c : str) {
+        if (!isdigit(c)) return false;
+    }
+    return true;
+}
+
+// Hàm kiểm tra chuỗi có phải double (cho phép 1 dấu chấm, cho phép dấu '-' ở đầu)
+bool isAllDouble(const string& str) {
+    if (str.empty()) return false;
+    int start = 0;
+    if (str[0] == '-') {
+        if (str.size() == 1) return false;
+        start = 1;
+    }
+    bool hasDot = false;
+    for (size_t i = start; i < str.size(); i++) {
+        if (str[i] == '.') {
+            if (hasDot) return false; // chỉ cho 1 dấu '.'
+            hasDot = true;
+        }
+        else if (!isdigit(str[i])) {
+            return false;
+        }
+    }
+    return true;
+}
+
+// ===================== CLASS DATE =====================
+class Date {
+private:
+    int day;
+    int month;
+    int year;
+
+    bool isLeapYear(int y) const {
+        return ((y % 400 == 0) || (y % 4 == 0 && y % 100 != 0));
+    }
+
+    int daysInMonth(int m, int y) const {
+        switch (m) {
+        case 4: case 6: case 9: case 11: return 30;
+        case 2: return (isLeapYear(y) ? 29 : 28);
+        default: return 31;
+        }
+    }
+
+public:
+    Date() : day(0), month(0), year(0) {}
+    Date(int d, int m, int y) : day(d), month(m), year(y) {}
+
+    void input() {
+        while (true) {
+            string sd, sm, sy;
+            cout << "   Nhap ngay: ";   cin >> sd;
+            cout << "   Nhap thang: "; cin >> sm;
+            cout << "   Nhap nam: ";   cin >> sy;
+
+            if (!isAllDigit(sd) || !isAllDigit(sm) || !isAllDigit(sy)) {
+                cout << "Loi: Vui long nhap so nguyen hop le!\n";
+                continue;
+            }
+
+            day = stoi(sd);
+            month = stoi(sm);
+            year = stoi(sy);
+
+            if (month < 1 || month > 12) {
+                cout << "Thang khong hop le!\n";
+            }
+            else if (day < 1 || day > daysInMonth(month, year)) {
+                cout << "Ngay khong hop le!\n";
+            }
+            else {
+                break;
+            }
+            cout << "Vui long nhap lai.\n";
+        }
+    }
+
+    void print() const {
+        cout << day << "/" << month << "/" << year;
+    }
+
+    bool operator<(const Date& other) const {
+        if (year < other.year) return true;
+        if (year > other.year) return false;
+        if (month < other.month) return true;
+        if (month > other.month) return false;
+        return (day < other.day);
+    }
+
+    int getDay()   const { return day; }
+    int getMonth() const { return month; }
+    int getYear()  const { return year; }
+};
+
+// Tính số tháng chênh lệch giữa hai Date
+int getMonthDiff(const Date& start, const Date& end) {
+    int totalMStart = start.getYear() * 12 + start.getMonth();
+    int totalMEnd = end.getYear() * 12 + end.getMonth();
+    int diff = totalMEnd - totalMStart;
+    if (end.getDay() < start.getDay()) {
+        diff--;
+    }
+    return diff;
+}
+
+// ================= KIỂM TRA CÁC TRƯỜNG CHUỖI ==================
+bool isValidMaSo(const string& s) {
+    if (s.empty() || s.size() > 5) return false;
+    for (char c : s) {
+        if (!isalnum(c)) return false;
+    }
+    return true;
+}
+
+bool isValidHoTen(const string& s) {
+    if (s.empty() || s.size() > 30) return false;
+    for (char c2 : s) {
+        if (!isalpha(c2) && c2 != ' ') return false;
+    }
+    return true;
+}
+
+bool isValidCMND(const string& s) {
+    if (!(s.size() == 9 || s.size() == 12)) return false;
+    for (char c : s) {
+        if (!isdigit(c)) return false;
+    }
+    return true;
+}
+
+// =================== CLASS SOTIETKIEM ===================
+class SoTietKiem {
+private:
+    string maSo;         // <=5 ký tự
+    string loaiTietKiem; // "nganhan" / "daihan"
+    string hoTenKhachHang;
+    string cmnd;         // 9 hoặc 12 số
+    Date   ngayMoSo;
+    double soTienGui;
+
+public:
+    SoTietKiem()
+        : maSo(""), loaiTietKiem(""), hoTenKhachHang(""), cmnd(""), soTienGui(0.0)
+    {
+    }
+
+    void nhapThongTin() {
+        // Mã sổ
+        while (true) {
+            cout << "Nhap ma so (<=5 ky tu, chu hoac so): ";
+            cin >> maSo;
+            if (!isValidMaSo(maSo)) {
+                cout << "  -> Ma so khong hop le!\n";
+            }
+            else break;
+        }
+
+        // Loại tiết kiệm
+        while (true) {
+            cout << "Nhap loai tiet kiem (chi 'nganhan' hoac 'daihan'): ";
+            cin >> loaiTietKiem;
+            if (loaiTietKiem == "nganhan" || loaiTietKiem == "daihan") {
+                break;
+            }
+            else {
+                cout << "  -> Loai tiet kiem khong hop le! Nhap lai.\n";
+            }
+        }
+
+        cin.ignore(1000, '\n');
+        while (true) {
+            cout << "Nhap ho ten khach hang: ";
+            getline(cin, hoTenKhachHang);
+            if (!isValidHoTen(hoTenKhachHang)) {
+                cout << "  -> Ho ten khong hop le!\n";
+            }
+            else break;
+        }
+
+        // CMND
+        while (true) {
+            cout << "Nhap CMND (9 hoac 12 so): ";
+            cin >> cmnd;
+            if (!isValidCMND(cmnd)) {
+                cout << "  -> CMND khong hop le!\n";
+            }
+            else break;
+        }
+
+        // Ngày mở sổ
+        cout << "Nhap ngay mo so:\n";
+        ngayMoSo.input();
+
+        // Số tiền gửi
+        while (true) {
+            cout << "Nhap so tien gui (> 0): ";
+            cin >> soTienGui;
+            if (soTienGui <= 0) {
+                cout << "  -> So tien phai > 0!\n";
+            }
+            else break;
+        }
+    }
+
+    void xuatThongTin() const {
+        cout << "Ma so: " << maSo
+            << " | Loai TK: " << loaiTietKiem
+            << " | Ho ten: " << hoTenKhachHang
+            << " | CMND: " << cmnd
+            << " | Ngay mo so: ";
+        ngayMoSo.print();
+        cout << " | So tien gui: " << fixed << setprecision(0) << soTienGui << endl;
+    }
+
+    // Hàm rút tiền
+    void rutTien(double soTienRut, const Date& ngayHienTai,
+        double laiSuatNganHan, double laiSuatDaiHan)
+    {
+        if (soTienRut <= 0) {
+            cout << "Khong the rut so tien <= 0\n";
+            return;
+        }
+
+        int monthDiff = getMonthDiff(ngayMoSo, ngayHienTai);
+
+        double lai = 0.0;
+        if (monthDiff < 6) {
+            cout << "RUT TRUOC HAN => LAI SUAT 0.5%/nam\n";
+            lai = soTienGui * 0.5 / 100.0 * (monthDiff / 12.0);
+        }
+        else {
+            double rate = 0.0;
+            if (loaiTietKiem == "nganhan") {
+                rate = laiSuatNganHan;
+            }
+            else { // dai han
+                rate = laiSuatDaiHan;
+            }
+            cout << "RUT DUNG HAN => Ap dung lai suat " << rate << "%/nam\n";
+            lai = soTienGui * (rate / 100.0) * (monthDiff / 12.0);
+        }
+
+        double tong = soTienGui + lai;
+        
+        if (soTienRut > tong) {
+            cout << "Khong du so tien (da cong lai) de rut!\n";
+            return;
+        }
+
+        // Nếu đủ -> trừ
+        soTienGui = tong - soTienRut;
+        cout << "Rut thanh cong. So du con lai: "
+            << fixed << setprecision(0) << soTienGui << endl;
+    }
+
+    // Getter
+    const string& getCMND() const { return cmnd; }
+    double getSoTienGui() const { return soTienGui; }
+    const Date& getNgayMoSo() const { return ngayMoSo; }
+    const string& getLoaiTietKiem() const { return loaiTietKiem; }
+};
+
+// =================== CÁC HÀM TIỆN ÍCH KHÁC ===================
+void timKiem_CMND(const vector<SoTietKiem>& ds, const string& cmnd) {
+    bool found = false;
+    for (auto& stk : ds) {
+        if (stk.getCMND() == cmnd) {
+            stk.xuatThongTin();
+            found = true;
+        }
+    }
+    if (!found) {
+        cout << "Khong tim thay so tiet kiem voi CMND: " << cmnd << endl;
+    }
+}
+
+// So sánh
+bool cmpDateTang(const SoTietKiem& a, const SoTietKiem& b) {
+    return (a.getNgayMoSo() < b.getNgayMoSo());
+}
+bool cmpTienGiam(const SoTietKiem& a, const SoTietKiem& b) {
+    return (a.getSoTienGui() > b.getSoTienGui());
+}
+
+// Liệt kê
+void lietKeKhoangThoiGian(const vector<SoTietKiem>& ds, const Date& d1, const Date& d2) {
+    bool found = false;
+    for (auto& stk : ds) {
+        Date ng = stk.getNgayMoSo();
+        if (!(ng < d1) && !(d2 < ng)) {
+            stk.xuatThongTin();
+            found = true;
+        }
+    }
+    if (!found) {
+        cout << "Khong co so tiet kiem nao mo trong khoang thoi gian nay.\n";
+    }
+}
+
+// ==================== MAIN ====================
+int main() {
+    cout << fixed << setprecision(0);
+
+    // Nhập danh sách
+    int n;
+    cout << "Nhap so luong so tiet kiem: ";
+    cin >> n;
+    vector<SoTietKiem> ds(n);
+
+    for (int i = 0; i < n; i++) {
+        cout << "\n=== Nhap so tiet kiem thu " << i + 1 << " ===\n";
+        ds[i].nhapThongTin();
+    }
+
+    // In danh sách
+    cout << "\n=== Danh sach so tiet kiem vua nhap ===\n";
+    for (auto& stk : ds) {
+        stk.xuatThongTin();
+    }
+
+    // Nhập lãi suất ngắn hạn, dài hạn
+    double laiSuatNganHan = 0.0, laiSuatDaiHan = 0.0;
+    while (true) {
+        cout << "\nNhap lai suat ngan han (%/nam): ";
+        string sShort;
+        cin >> sShort;
+        if (!isAllDouble(sShort)) {
+            cout << "  -> Khong hop le! Vui long nhap dinh dang so.\n";
+            continue;
+        }
+        laiSuatNganHan = stod(sShort);
+        break;
+    }
+
+    while (true) {
+        cout << "Nhap lai suat dai han (%/nam): ";
+        string sLong;
+        cin >> sLong;
+        if (!isAllDouble(sLong)) {
+            cout << "  -> Khong hop le! Vui long nhap dinh dang so.\n";
+            continue;
+        }
+        laiSuatDaiHan = stod(sLong);
+        break;
+    }
+
+    // Tìm kiếm theo CMND
+    cout << "\nNhap CMND muon tim: ";
+    string c;
+    cin >> c;
+    timKiem_CMND(ds, c);
+
+    // Sắp xếp giảm dần theo tiền
+    cout << "\n=== Sap xep theo so tien giam dan ===\n";
+    sort(ds.begin(), ds.end(), cmpTienGiam);
+    for (auto& st : ds) {
+        st.xuatThongTin();
+    }
+
+    // Sắp xếp tăng dần theo ngày
+    cout << "\n=== Sap xep theo ngay mo so tang dan ===\n";
+    sort(ds.begin(), ds.end(), cmpDateTang);
+    for (auto& st : ds) {
+        st.xuatThongTin();
+    }
+
+    // Liệt kê [d1, d2]
+    cout << "\nNhap khoang thoi gian (date1 -> date2) de liet ke:\n";
+    Date d1, d2;
+    cout << "Date1:\n";
+    d1.input();
+    while (true) {
+        cout << "Date2:\n";
+        d2.input();
+        if (d2 < d1) {
+            cout << "Loi: Date2 phai lon hon (hoac bang) Date1. Vui long nhap lai.\n";
+        }
+        else {
+            break;
+        }
+    }
+    lietKeKhoangThoiGian(ds, d1, d2);
+
+    // Demo rút tiền
+    if (!ds.empty()) {
+        cout << "\n=== Chuc nang rut tien so thu 1 ===\n";
+        // B1: Người dùng nhập ngày rút
+        Date ngayRut;
+        cout << "Nhap ngay muon rut:\n";
+        ngayRut.input();
+
+        // B2: Tính monthDiff và lãi => hiển thị số tiền có thể rút
+        int monthDiff = getMonthDiff(ds[0].getNgayMoSo(), ngayRut);
+        double lai = 0.0;
+        if (monthDiff < 6) {
+            cout << "Ban dang rut truoc han (<6 thang). Lai suat = 0.5%/nam\n";
+            lai = ds[0].getSoTienGui() * 0.5 / 100.0 * (monthDiff / 12.0);
+        }
+        else {
+            double rate = 0.0;
+            if (ds[0].getLoaiTietKiem() == "nganhan") {
+                rate = laiSuatNganHan;
+                cout << "Ban dang rut dung han (>=6 thang), lai suat ngan han = "
+                    << laiSuatNganHan << "%/nam\n";
+            }
+            else {
+                rate = laiSuatDaiHan;
+                cout << "Ban dang rut dung han, lai suat dai han = "
+                    << laiSuatDaiHan << "%/nam\n";
+            }
+            lai = ds[0].getSoTienGui() * (rate / 100.0) * (monthDiff / 12.0);
+        }
+        double tong = ds[0].getSoTienGui() + lai;
+
+        cout << "=> So tien GOC + LAI co the rut: " << tong << endl;
+
+        // B3: Hỏi người dùng muốn rút bao nhiêu
+        cout << "Nhap so tien muon rut (Neu nhap 0 => rut toan bo): ";
+        double soTienRut;
+        cin >> soTienRut;
+
+        // B4: Gọi hàm rutTien
+        if (soTienRut == 0) {
+            // Rút toàn bộ
+            ds[0].rutTien(tong, ngayRut, laiSuatNganHan, laiSuatDaiHan);
+        }
+        else {
+            // Rút một phần
+            ds[0].rutTien(soTienRut, ngayRut, laiSuatNganHan, laiSuatDaiHan);
+        }
+    }
+
+    cout << "\nKet thuc.\n";
+    return 0;
+}
