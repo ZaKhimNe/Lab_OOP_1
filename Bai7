@@ -1,0 +1,390 @@
+#include <iostream>
+#include <string>
+#include <vector>
+#include <algorithm>
+#include <cctype>   // isalpha, isdigit
+#include <limits>   // numeric_limits
+#include <iomanip>  // setw, setfill
+using namespace std;
+
+// ==================================================
+//    1) Hàm kiểm tra, hỗ trợ chung
+// ==================================================
+
+// Kiểm tra chuỗi có phải toàn chữ số không
+bool isAllDigit(const string &str) {
+    if (str.empty()) return false;
+    for (char c : str) {
+        if (!isdigit(static_cast<unsigned char>(c))) {
+            return false;
+        }
+    }
+    return true;
+}
+
+// Năm nhuận
+bool laNamNhuan(int y) {
+    // Năm nhuận: (chia hết 400) hoặc (chia hết 4 nhưng không chia hết 100)
+    if ((y % 400 == 0) || (y % 4 == 0 && y % 100 != 0))
+        return true;
+    return false;
+}
+
+// Số ngày trong tháng
+int daysInMonth(int month, int year) {
+    if (month == 2) {
+        return laNamNhuan(year) ? 29 : 28;
+    }
+    if (month == 4 || month == 6 || month == 9 || month == 11) {
+        return 30;
+    }
+    return 31;
+}
+
+// Kiểm tra hợp lệ mã chuyến bay: <= 5 ký tự, không space, chỉ chữ & số
+bool isValidMaCB(const string &s) {
+    if (s.empty() || s.size() > 5) return false;
+    for (char c : s) {
+        // Không cho khoảng trắng
+        if (isspace(static_cast<unsigned char>(c))) return false;
+        // Chỉ cho chữ cái (A-Z, a-z) hoặc chữ số (0-9)
+        if (!isalnum(static_cast<unsigned char>(c))) return false;
+    }
+    return true;
+}
+
+// Kiểm tra nơi đi / nơi đến: ≤ 20 ký tự, chỉ cho phép chữ cái + khoảng trắng
+bool isValidPlace(const string &s) {
+    if (s.empty() || s.size() > 20) return false;
+    for (char c : s) {
+        if (!isalpha(static_cast<unsigned char>(c)) && c != ' ') {
+            return false;
+        }
+    }
+    return true;
+}
+
+// ==================================================
+//    2) Lớp ChuyenBay
+// ==================================================
+class ChuyenBay {
+private:
+    // Mã chuyến bay
+    string maChuyenBay;
+
+    // Thuộc tính ngày/giờ
+    int day, month, year;
+    int hour, minute;
+
+    // Nơi đi / đến
+    string noiDi;
+    string noiDen;
+
+public:
+    // ---------------------------
+    // Các hàm thành phần
+    // ---------------------------
+    void nhap();
+    void xuat() const;
+
+    // Tách riêng hàm inputDate() và inputTime() theo yêu cầu
+    void inputDate();
+    void inputTime();
+
+    // So sánh sớm hơn (phục vụ sắp xếp)
+    bool somHon(const ChuyenBay &other) const;
+
+    // Getter
+    string getMaCB()   const { return maChuyenBay; }
+    string getNoiDi()  const { return noiDi; }
+    string getNoiDen() const { return noiDen; }
+    int getDay()   const { return day; }
+    int getMonth() const { return month; }
+    int getYear()  const { return year; }
+    int getHour()  const { return hour; }
+    int getMinute()const { return minute; }
+};
+
+// ---------------------------
+// Cài đặt hàm inputDate()
+// ---------------------------
+void ChuyenBay::inputDate() {
+    while (true) {
+        string sd, sm, sy;
+        cout << "   Nhap ngay  : ";
+        cin >> sd;
+        cout << "   Nhap thang : ";
+        cin >> sm;
+        cout << "   Nhap nam   : ";
+        cin >> sy;
+
+        // Kiểm tra chuỗi có phải số
+        if (!isAllDigit(sd) || !isAllDigit(sm) || !isAllDigit(sy)) {
+            cout << "  Loi: Vui long nhap so nguyen hop le!\n";
+            continue;
+        }
+
+        // Chuyển sang int
+        day   = stoi(sd);
+        month = stoi(sm);
+        year  = stoi(sy);
+
+        // Kiểm tra phạm vi
+        if (month < 1 || month > 12) {
+            cout << "  Thang khong hop le!\n";
+        }
+        else if (day < 1 || day > daysInMonth(month, year)) {
+            cout << "  Ngay khong hop le!\n";
+        }
+        else {
+            // Hợp lệ => thoát vòng lặp
+            break;
+        }
+        cout << "  Vui long nhap lai.\n";
+    }
+}
+
+// ---------------------------
+// Cài đặt hàm inputTime()
+// ---------------------------
+void ChuyenBay::inputTime() {
+    while (true) {
+        string sh, smin;
+        cout << "   Nhap gio  (0..23): ";
+        cin >> sh;
+        cout << "   Nhap phut (0..59): ";
+        cin >> smin;
+
+        // Kiểm tra chuỗi có phải số
+        if (!isAllDigit(sh) || !isAllDigit(smin)) {
+            cout << "  Loi: Vui long nhap so nguyen hop le!\n";
+            continue;
+        }
+
+        // Chuyển sang int
+        hour   = stoi(sh);
+        minute = stoi(smin);
+
+        // Kiểm tra phạm vi
+        if (hour < 0 || hour > 23) {
+            cout << "  Gio khong hop le!\n";
+        }
+        else if (minute < 0 || minute > 59) {
+            cout << "  Phut khong hop le!\n";
+        }
+        else {
+            // Hợp lệ => thoát
+            break;
+        }
+        cout << "  Vui long nhap lai.\n";
+    }
+}
+
+// ---------------------------
+// Cài đặt hàm nhap()
+// ---------------------------
+void ChuyenBay::nhap() {
+    // 1) Mã chuyến bay
+    while (true) {
+        cout << "\nNhap ma chuyen bay (toi da 5 ky tu, khong space/ky tu dac biet): ";
+        cin >> maChuyenBay;
+        if (isValidMaCB(maChuyenBay)) {
+            break;
+        } else {
+            cout << "  -> Ma khong hop le. Vui long nhap lai.\n";
+        }
+    }
+
+    // 2) Gọi hàm inputDate() để nhập ngày
+    inputDate();
+
+    // 3) Gọi hàm inputTime() để nhập giờ
+    inputTime();
+
+    // Dọn bộ đệm trước khi dùng getline
+    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
+    // 4) Noi di
+    while (true) {
+        cout << "   Nhap noi di  (toi da 20 ky tu): ";
+        getline(cin, noiDi);
+        if (isValidPlace(noiDi)) {
+            break;
+        } else {
+            cout << "   -> Noi di khong hop le. Nhap lai.\n";
+        }
+    }
+
+    // 5) Noi den
+    while (true) {
+        cout << "   Nhap noi den (toi da 20 ky tu): ";
+        getline(cin, noiDen);
+        if (isValidPlace(noiDen)) {
+            break;
+        } else {
+            cout << "   -> Noi den khong hop le. Nhap lai.\n";
+        }
+    }
+}
+
+// ---------------------------
+// Cài đặt hàm xuat()
+// ---------------------------
+void ChuyenBay::xuat() const {
+    cout << "MaCB: " << maChuyenBay
+         << " | Ngay: " << day << "/" << month << "/" << year
+         << " | Gio: "  << setw(2) << setfill('0') << hour << ":"
+                         << setw(2) << setfill('0') << minute
+         << " | NoiDi: " << noiDi
+         << " | NoiDen: " << noiDen
+         << endl;
+    cout << setfill(' ');  // reset fill
+}
+
+// ---------------------------
+// So sánh ngày-giờ (somHon)
+// ---------------------------
+bool ChuyenBay::somHon(const ChuyenBay &other) const {
+    // So sánh năm
+    if (year < other.year) return true;
+    if (year > other.year) return false;
+
+    // năm bằng => so sánh tháng
+    if (month < other.month) return true;
+    if (month > other.month) return false;
+
+    // tháng bằng => so sánh ngày
+    if (day < other.day) return true;
+    if (day > other.day) return false;
+
+    // ngày bằng => so sánh giờ
+    if (hour < other.hour) return true;
+    if (hour > other.hour) return false;
+
+    // giờ bằng => so sánh phút
+    return (minute < other.minute);
+}
+
+// ==================================================
+//    3) Hàm main
+// ==================================================
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int n;
+    cout << "Nhap so luong chuyen bay: ";
+    cin >> n;
+
+    vector<ChuyenBay> ds(n);
+    for (int i = 0; i < n; i++) {
+        cout << "\n=== Nhap thong tin chuyen bay thu " << (i + 1) << " ===\n";
+        ds[i].nhap();
+    }
+
+    // Sắp xếp danh sách theo ngày giờ (sớm -> muộn)
+    sort(ds.begin(), ds.end(), [](const ChuyenBay &a, const ChuyenBay &b){
+        return a.somHon(b);
+    });
+
+    // Xuất danh sách sau khi sắp xếp
+    cout << "\n=== DANH SACH CHUYEN BAY (SAP XEP THEO NGAY/GIO) ===\n";
+    for (auto &cb : ds) {
+        cb.xuat();
+    }
+
+    // 1) Tìm kiếm chuyến bay theo mã
+    {
+        cout << "\nNhap ma chuyen bay can tim: ";
+        string maTim;
+        cin >> maTim;
+        bool found = false;
+        for (auto &cb : ds) {
+            if (cb.getMaCB() == maTim) {
+                cb.xuat();
+                found = true;
+            }
+        }
+        if (!found) {
+            cout << "Khong tim thay ma chuyen bay \"" << maTim << "\"\n";
+        }
+    }
+
+    // 2) Hiển thị tất cả chuyến bay khởi hành từ X trong ngày D
+    {
+        cout << "\nNhap noi di can tim: ";
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+        string noiDiTim;
+        getline(cin, noiDiTim);
+
+        cout << "Nhap ngay/thang/nam can tim: ";
+        int d, m, y;
+        while (true) {
+            string sd, sm, sy;
+            cout << "Nhap ngay can tim  : ";
+            cin >> sd;
+            cout << "Nhap thang can tim : ";
+            cin >> sm;
+            cout << "Nhap nam can tim   : ";
+            cin >> sy;
+
+            if (!isAllDigit(sd) || !isAllDigit(sm) || !isAllDigit(sy)) {
+                cout << "Loi: Vui long nhap so nguyen hop le!\n";
+                continue;
+            }
+            d = stoi(sd);
+            m = stoi(sm);
+            y = stoi(sy);
+            if (m < 1 || m > 12) {
+                cout << "Thang khong hop le!\n";
+            }
+            else if (d < 1 || d > daysInMonth(m, y)) {
+                cout << "Ngay khong hop le!\n";
+            }
+            else {
+                break;
+            }
+            cout << "Vui long nhap lai.\n";
+        }
+
+
+        cout << "\n=== Danh sach chuyen bay khoi hanh tu '" << noiDiTim
+             << "' vao ngay " << d << "/" << m << "/" << y << " ===\n";
+        bool found = false;
+        for (auto &cb : ds) {
+            if (cb.getNoiDi() == noiDiTim
+                && cb.getDay() == d
+                && cb.getMonth() == m
+                && cb.getYear() == y) {
+                cb.xuat();
+                found = true;
+            }
+        }
+        if (!found) {
+            cout << "(Khong co chuyen bay phu hop)\n";
+        }
+    }
+
+    // 3) Đếm số chuyến bay từ A -> B
+    {
+        cout << "\nNhap noi di A: ";
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+        string diA;
+        getline(cin, diA);
+
+        cout << "Nhap noi den B: ";
+        string denB;
+        getline(cin, denB);
+
+        int countAB = 0;
+        for (auto &cb : ds) {
+            if (cb.getNoiDi() == diA && cb.getNoiDen() == denB) {
+                countAB++;
+            }
+        }
+        cout << "=> So luong chuyen bay tu \"" << diA << "\" den \"" << denB 
+             << "\": " << countAB << endl;
+    }
+
+    return 0;
+}
