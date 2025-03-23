@@ -1,0 +1,75 @@
+#include <iostream>
+#include <string>
+#include <cmath>
+using namespace std;
+
+// Hàm kiểm tra chuỗi có phải số thực hợp lệ không
+bool isValidNumber(const string& str) {
+    int start = 0;
+    bool hasDot = false; // Để kiểm tra số thực
+
+    if (str.empty()) return false; // Chuỗi rỗng không hợp lệ
+
+    if (str[0] == '-') { // Kiểm tra nếu là số âm
+        if (str.size() == 1) return false; // Chỉ có dấu '-' không hợp lệ
+        start = 1; // Bỏ qua dấu '-' khi kiểm tra số
+    }
+
+    for (size_t i = start; i < str.size(); i++) {
+        if (str[i] == '.') {
+            if (hasDot) return false; // Nếu có nhiều hơn 1 dấu `.`, không hợp lệ
+            hasDot = true;
+        }
+        else if (!isdigit(str[i])) {
+            return false; // Nếu có ký tự không phải số
+        }
+    }
+    return true;
+}
+
+class SinCal {
+private:
+    double x;
+    const double min = 0.00001;
+
+public:
+    SinCal(double xx) : x(xx) {}
+
+    double calSin() {
+        double temp = x;
+        double result = x;
+        int n = 1;
+
+        while (fabs(temp) >= min) {
+            temp *= -(x * x) / ((2 * n) * (2 * n + 1));
+            result+= temp;
+            n++;
+        }
+        return result;
+    }
+};
+
+int main() {
+    string input;
+    double x;
+
+    // Vòng lặp kiểm tra nhập hợp lệ
+    while (true) {
+        cout << "Nhap x (radian): ";
+        cin >> input;
+
+        // Kiểm tra chuỗi có phải số hợp lệ không
+        if (isValidNumber(input)) {
+            x = stod(input); // Chuyển đổi sang double
+            break; // Nếu hợp lệ, thoát vòng lặp
+        }
+        cout << "Loi: Vui long nhap so hop le!" << endl;
+    }
+
+    SinCal sinCalc(x);
+    double result = sinCalc.calSin();
+
+    cout << "Sin(" << x << ") = " << result << endl;
+
+    return 0;
+}
