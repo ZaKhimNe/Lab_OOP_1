@@ -1,0 +1,165 @@
+#include <iostream>
+#include <string>
+using namespace std;
+
+// Hàm kiểm tra chuỗi chỉ gồm các chữ số (cho phép dấu '-')
+bool isAllDigit(const string& str) {
+    int start = 0;
+    if (str[0] == '-') { // Kiểm tra nếu input là số âm
+        if (str.size() == 1)
+            return false;
+        start = 1;
+    }
+    for (size_t i = start; i < str.size(); i++) {
+        if (!isdigit(str[i])) {
+            return false;
+        }
+    }
+    return true;
+}
+
+class PhanSo {
+private:
+    string tuso;   // Tử số lưu dạng string
+    string mauso;  // Mẫu số lưu dạng string
+
+public:
+    // Constructor mặc định
+    PhanSo() : tuso("0"), mauso("1") {}
+
+    // Constructor nhận int
+    PhanSo(int tu, int mau) {
+        tuso = to_string(tu);
+        mauso = to_string(mau);
+        // Đảm bảo mẫu dương
+        if (mau < 0) {
+            tu = -tu;
+            mau = -mau;
+            tuso = to_string(tu);
+            mauso = to_string(mau);
+        }
+    }
+
+    // Hàm nhập
+    void Nhap() {
+        cout << "Nhap tu so: ";
+        cin >> tuso;
+        while (!isAllDigit(tuso)) {
+            cout << "Khong hop le. Nhap lai tu so: ";
+            cin >> tuso;
+        }
+
+        cout << "Nhap mau so (khac 0): ";
+        cin >> mauso;
+        while (!isAllDigit(mauso) || stoi(mauso) == 0) {
+            cout << "Khong hop le. Nhap lai mau so (khac 0): ";
+            cin >> mauso;
+        }
+
+        int tuInt = stoi(tuso);
+        int mauInt = stoi(mauso);
+
+        // Đảm bảo mẫu dương
+        if (mauInt < 0) {
+            tuInt = -tuInt;
+            mauInt = -mauInt;
+        }
+        tuso = to_string(tuInt);
+        mauso = to_string(mauInt);
+    }
+
+    // Hàm xuất
+    void Xuat() const {
+        if (mauso != "1" && tuso != "0") {
+            cout << tuso << "/" << mauso << endl;
+        }
+        else {
+            cout << tuso << endl;
+        }
+    }
+
+    // Lấy tử và mẫu dưới dạng int (tiện cho các phép tính)
+    int getTu() const { return stoi(tuso); }
+    int getMau() const { return stoi(mauso); }
+
+
+    // Tổng: (a/b) + (c/d) = (ad + bc)/(bd)
+    PhanSo tong(const PhanSo& a) const {
+        int tu1 = getTu(), mau1 = getMau();
+        int tu2 = a.getTu(), mau2 = a.getMau();
+        int tu = tu1 * mau2 + mau1 * tu2;
+        int mau = mau1 * mau2;
+        return PhanSo(tu, mau);
+    }
+
+    // Hiệu: (a/b) - (c/d) = (ad - bc)/(bd)
+    PhanSo hieu(const PhanSo& a) const {
+        int tu1 = getTu(), mau1 = getMau();
+        int tu2 = a.getTu(), mau2 = a.getMau();
+        int tu = tu1 * mau2 - mau1 * tu2;
+        int mau = mau1 * mau2;
+        return PhanSo(tu, mau);
+    }
+
+    // Tích: (a/b)*(c/d) = (ac)/(bd)
+    PhanSo tich(const PhanSo& a) const {
+        int tu1 = getTu(), mau1 = getMau();
+        int tu2 = a.getTu(), mau2 = a.getMau();
+        int tu = tu1 * tu2;
+        int mau = mau1 * mau2;
+        return PhanSo(tu, mau);
+    }
+
+    // Thương: (a/b)/(c/d) = (a*d)/(b*c)
+    PhanSo thuong(const PhanSo& a) const {
+        int tu1 = getTu(), mau1 = getMau();
+        int tu2 = a.getTu(), mau2 = a.getMau();
+
+
+        if (tu2 == 0) {
+            cout << "[THUONG] Loi: chia cho 0 => Khong xac dinh!\n";
+            return PhanSo(); 
+        }
+
+
+        if (tu1 == 0 && tu2 == 0) {
+            cout << "[THUONG] Loi: 0/0 => Khong xac dinh!\n";
+            return PhanSo(); 
+        }
+
+
+        int tu = tu1 * mau2;
+        int mau = mau1 * tu2;
+
+        if (mau == 0) {
+            cout << "[THUONG] Loi: Mau=0 (0/0) => Khong xac dinh!\n";
+            return PhanSo();
+        }
+
+        return PhanSo(tu, mau);
+    }
+};
+
+int main() {
+    PhanSo a, b;
+    cout << "Nhap phan so thu nhat:";
+    a.Nhap();
+    cout << "Nhap phan so thu hai:";
+    b.Nhap();
+
+    PhanSo T = a.tong(b);
+    PhanSo H = a.hieu(b);
+    PhanSo Ti = a.tich(b);
+    PhanSo Th = a.thuong(b);
+
+    cout << "Tong: ";
+    T.Xuat();
+    cout << "Hieu: ";
+    H.Xuat();
+    cout << "Tich: ";
+    Ti.Xuat();
+    cout << "Thuong: ";
+    Th.Xuat();
+
+    return 0;
+}
